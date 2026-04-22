@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-wire",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "n8n community node for Wire. Push entries into a Wire container from any workflow.",
   "keywords": [
     "n8n-community-node-package",
@@ -35,6 +35,7 @@
     "dev": "n8n-node dev",
     "lint": "n8n-node lint",
     "lint:fix": "n8n-node lint --fix",
+    "release": "n8n-node release",
     "prepublishOnly": "n8n-node prerelease"
   },
   "files": [
