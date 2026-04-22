@@ -6,6 +6,8 @@ import {
 	type INodeTypeDescription,
 } from 'n8n-workflow';
 
+import { resolveWireAddress } from '../../credentials/WireApi.credentials';
+
 interface WireEntryResponse {
 	success: boolean;
 	data?: {
@@ -19,19 +21,19 @@ interface WireEntryResponse {
 }
 
 /**
- * Map Wire error codes to human-friendly messages. Wire's REST responses use
+ * Map Wire error codes to human messages. Wire REST responses use
  * `{ success: false, error: { code, message } }`. We surface the raw Wire
- * message as the source of truth, but prepend a plain-English explanation for
- * the codes users are most likely to hit.
+ * message plus a plain-English explanation for the codes users are most
+ * likely to hit.
  */
 function explainWireError(code: string | undefined, fallback: string): string {
 	switch (code) {
 		case 'INSUFFICIENT_CREDITS':
-			return 'Wire container is out of credits. Top up at https://app.usewire.io/billing.';
+			return 'Wire container is out of credits. Top up at https://usewire.io.';
 		case 'FORBIDDEN':
-			return 'This API key does not have access to the target container, or the key is missing the `write` scope.';
+			return 'This API key does not have access to the target container, or the key is missing the write scope.';
 		case 'NOT_FOUND':
-			return 'Container not found. Check the Container URL in your Wire API credential.';
+			return 'Container not found. Check the Wire Address in your credential.';
 		case 'UNAUTHORIZED':
 			return 'API key was rejected. It may be revoked, expired, or for a different container.';
 		case 'TOOL_ERROR':
@@ -64,7 +66,7 @@ export class Wire implements INodeType {
 		properties: [
 			{
 				displayName:
-					'Sends each input item to your Wire container as an entry. Content is auto-classified: strings become text, objects become structured data. The entry is tagged with the workflow and node name so you can trace where it came from.',
+					'Every input item is sent to your Wire container as an entry. Strings are stored as text, objects as structured data. The entry is tagged with the workflow and node name.',
 				name: 'notice',
 				type: 'notice',
 				default: '',
@@ -78,9 +80,7 @@ export class Wire implements INodeType {
 				typeOptions: {
 					rows: 4,
 				},
-				description:
-					'The body of the entry. Text, markdown, or a JSON object. Use an expression like {{ $json }} to send the whole input item, or {{ $json.fieldName }} to send a specific field.',
-				placeholder: '{{ $json }}',
+				description: 'What to store. A string, markdown, or an expression resolving to an object.',
 			},
 			{
 				displayName: 'Options',
@@ -103,7 +103,7 @@ export class Wire implements INodeType {
 						type: 'string',
 						default: '',
 						description:
-							'Override the default source label. By default, entries are stamped with `n8n:{workflowId}:{nodeName}` so you can trace them back. Use this to set a custom value like `crm-sync` or `daily-report`.',
+							'Override the default source label. By default, entries are stamped with n8n:{workflowId}:{nodeName} so you can trace them back.',
 						placeholder: 'crm-sync',
 					},
 					{
@@ -112,7 +112,7 @@ export class Wire implements INodeType {
 						type: 'boolean',
 						default: false,
 						description:
-							'Whether string content should be stored as markdown (preserves headings, lists, code). Has no effect when content is an object.',
+							'Whether string content should be stored as markdown. Preserves headings, lists, and code blocks. No effect when content is an object.',
 					},
 					{
 						displayName: 'Metadata (JSON)',
@@ -132,12 +132,14 @@ export class Wire implements INodeType {
 		const returnData: INodeExecutionData[] = [];
 
 		const credentials = await this.getCredentials('wireApi');
-		const baseUrl = String(credentials.containerUrl ?? '').replace(/\/$/, '');
 
-		if (!baseUrl) {
+		let baseUrl: string;
+		try {
+			baseUrl = resolveWireAddress(String(credentials.wireAddress ?? ''));
+		} catch (err) {
 			throw new NodeOperationError(
 				this.getNode(),
-				'Wire credential is missing a Container URL. Open the credential and paste the URL from your container\'s Sources tab.',
+				err instanceof Error ? err.message : 'Invalid Wire Address.',
 			);
 		}
 
@@ -156,7 +158,6 @@ export class Wire implements INodeType {
 					metadata?: string | Record<string, unknown>;
 				};
 
-				// Infer contentType from the shape of the input. Users never pick.
 				let content: string | Record<string, unknown>;
 				let contentType: 'text' | 'markdown' | 'structured';
 
@@ -167,7 +168,6 @@ export class Wire implements INodeType {
 					content = rawContent as Record<string, unknown>;
 					contentType = 'structured';
 				} else {
-					// Numbers, booleans, null — coerce to string text.
 					content = String(rawContent);
 					contentType = 'text';
 				}

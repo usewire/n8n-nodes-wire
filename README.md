@@ -1,61 +1,43 @@
 # n8n-nodes-wire
 
-An [n8n](https://n8n.io) community node for [Wire](https://usewire.io) — push entries into a Wire container from any workflow.
+An [n8n](https://n8n.io) community node for [Wire](https://usewire.io). Push entries into a Wire container from any workflow.
 
-**Ingestion only.** This node is for getting data *into* Wire. Agents consume Wire via [MCP](https://docs.usewire.io/mcp/overview/), not n8n.
+Ingestion only. This node is for getting data into Wire. Agents consume Wire via MCP, not n8n.
 
 ## What it does
 
-One node. One action: **Write entry**. Every item that flows through the node becomes a Wire entry, ready to be searched by any agent connected to the container.
+One node. One action: **Write entry**. Every input item becomes a Wire entry, ready to be searched by any agent connected to the container.
 
-- **Strings** → stored as text (or markdown if you flip the option)
-- **Objects** → stored as structured data
+- Strings are stored as text (or markdown if you flip the option)
+- Objects are stored as structured data
 - Every entry is automatically tagged with the workflow and node name so you can trace where it came from
-- Tags, custom source labels, and arbitrary metadata are optional
+- Tags, a custom source label, and arbitrary metadata are optional
 
 ## Install
 
-### In n8n Cloud / self-hosted
+In n8n Cloud or self-hosted: go to **Settings → Community Nodes**, click **Install**, enter `n8n-nodes-wire`, accept the risk notice.
 
-1. Go to **Settings → Community Nodes**
-2. Click **Install**
-3. Enter `n8n-nodes-wire`
-4. Accept the risk notice and install
-
-### Manually (self-hosted)
-
-```bash
-npm install n8n-nodes-wire
-```
-
-Then restart n8n.
+Manually: `npm install n8n-nodes-wire` inside your n8n setup, then restart.
 
 ## Setup
 
-1. **Create a Wire container** at [app.usewire.io](https://app.usewire.io) (or use an existing one).
-2. Open the container's **Sources** tab.
-3. Click **Setup** under "Webhook writes".
-4. Copy the **Endpoint URL** (strip the trailing `/tools/write` — you only want the base up to `/container/{id}`).
-5. Click **Create container API key**, name it (e.g. "n8n"), and copy the key.
-6. In n8n, create a new **Wire API** credential:
-   - **Container URL**: paste the base URL
-   - **API Key**: paste the key
-   - Click **Test** — you should see a success message.
+1. In [Wire](https://usewire.io), open your container and go to the **Sources** tab.
+2. Click **Setup** on **Webhook writes**.
+3. Copy the **Wire Address** (looks like `wire://your-org/your-container`).
+4. Click **Create container API key**, name it, copy the key.
+5. In n8n, create a **Wire** credential and paste both values.
+6. Click **Test**. You should see a success message naming the container.
 
 ## Use
 
-Add a **Wire** node to your workflow, select your credential, and map **Content** to whatever you want to store. Common patterns:
-
-- `{{ $json }}` — store the entire input item as structured data
-- `{{ $json.summary }}` — store a specific field as text
-- A literal string — store a fixed note with every run
+Add a **Wire** node, pick your credential, and map **Content** to whatever you want to store.
 
 Under **Add option** you can set:
 
-- **Tags** — comma-separated, for later filtering
-- **Source Override** — replace the auto-generated source label
-- **Treat Content as Markdown** — preserves formatting for string content
-- **Metadata** — JSON object for audit trails, upstream IDs, etc.
+- **Tags**: comma-separated, for later filtering
+- **Source Override**: replace the auto-generated source label
+- **Treat Content as Markdown**: preserves formatting for string content
+- **Metadata**: JSON object for audit trails, upstream IDs, and so on
 
 ## What gets written
 
@@ -71,22 +53,18 @@ A call to `POST /container/:id/tools/write` with a body like:
 }
 ```
 
-See the [Wire REST API docs](https://docs.usewire.io/mcp/rest-api/#write) for the full contract.
-
 ## Errors
 
-The node surfaces Wire's error codes as human messages:
+The node maps Wire error codes to human messages:
 
-- **Out of credits** — Wire container needs a credit top-up at [app.usewire.io/billing](https://app.usewire.io/billing)
-- **Forbidden** — the API key doesn't have access to the target container
-- **Not found** — the Container URL in the credential is wrong
-- **Unauthorized** — the API key is revoked, expired, or for a different container
+- **Out of credits**: top up from Wire
+- **Forbidden**: the API key does not have access to the target container
+- **Not found**: the Wire Address in the credential is wrong
+- **Unauthorized**: the API key is revoked, expired, or for a different container
 
 ## Links
 
 - [Wire](https://usewire.io)
-- [Docs](https://docs.usewire.io)
-- [App](https://app.usewire.io)
 - [Issues](https://github.com/usewire/n8n-nodes-wire/issues)
 
 ## License
