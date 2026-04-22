@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-wire",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "n8n community node for Wire. Push entries into a Wire container from any workflow.",
   "keywords": [
     "n8n-community-node-package",
@@ -55,6 +55,6 @@
     "typescript": "5.9.3"
   },
   "peerDependencies": {
-    "n8n-workflow": "^1.17.0"
+    "n8n-workflow": "*"
   }
 }
