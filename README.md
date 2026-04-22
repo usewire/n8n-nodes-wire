@@ -22,7 +22,7 @@ Manually: `npm install n8n-nodes-wire` inside your n8n setup, then restart.
 ## Setup
 
 1. In [Wire](https://usewire.io), open your container and go to the **Sources** tab.
-2. Click **Setup** on **Webhook writes**.
+2. Click **Setup** on **n8n**.
 3. Copy the **Wire Address** (looks like `wire://your-org/your-container`).
 4. Click **Create container API key**, name it, copy the key.
 5. In n8n, create a **Wire** credential and paste both values.
@@ -57,7 +57,6 @@ A call to `POST /container/:id/tools/write` with a body like:
 
 The node maps Wire error codes to human messages:
 
-- **Out of credits**: top up from Wire
 - **Forbidden**: the API key does not have access to the target container
 - **Not found**: the Wire Address in the credential is wrong
 - **Unauthorized**: the API key is revoked, expired, or for a different container
