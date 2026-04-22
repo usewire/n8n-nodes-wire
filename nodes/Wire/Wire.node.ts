@@ -46,7 +46,7 @@ export class Wire implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'Wire',
 		name: 'wire',
-		icon: 'file:wire.svg',
+		icon: 'file:wire-icon.svg',
 		group: ['output'],
 		version: 1,
 		subtitle: '={{"Write entry"}}',

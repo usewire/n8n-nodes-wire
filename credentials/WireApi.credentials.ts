@@ -34,9 +34,9 @@ export function resolveWireAddress(raw: string): string {
 export class WireApi implements ICredentialType {
 	name = 'wireApi';
 
-	displayName = 'Wire';
+	displayName = 'Wire Container';
 
-	documentationUrl = 'https://usewire.io';
+	documentationUrl = 'https://docs.usewire.io/integrations/n8n/';
 
 	properties: INodeProperties[] = [
 		{
@@ -74,7 +74,7 @@ export class WireApi implements ICredentialType {
 
 	test: ICredentialTestRequest = {
 		request: {
-			baseURL: '={{ (() => { const u = new URL($credentials.wireAddress); return `https://${u.host}.api.usewire.io/container${u.pathname}`; })() }}',
+			baseURL: '={{ $credentials.wireAddress.replace(/^wire:\\/\\/([^/]+)\\/(.+?)\\/?$/, "https://$1.api.usewire.io/container/$2") }}',
 			url: '/status',
 			method: 'GET',
 		},
