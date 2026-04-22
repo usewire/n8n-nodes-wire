@@ -65,7 +65,7 @@ export class Wire implements INodeType {
 		properties: [
 			{
 				displayName:
-					'Every input item is sent to your Wire container as an entry. Strings are stored as text, objects as structured data. The entry is tagged with the workflow and node name.',
+					'Every input item is sent to your Wire container as an entry. Wire figures out the content type automatically. The entry is tagged with the workflow and node name.',
 				name: 'notice',
 				type: 'notice',
 				default: '',
@@ -79,7 +79,7 @@ export class Wire implements INodeType {
 				typeOptions: {
 					rows: 4,
 				},
-				description: 'What to store. A string, markdown, or an expression resolving to an object.',
+				description: 'What to store. A string or an expression resolving to an object.',
 			},
 			{
 				displayName: 'Options',
@@ -104,14 +104,6 @@ export class Wire implements INodeType {
 						description:
 							'Override the default source label. By default, entries are stamped with n8n:{workflowId}:{nodeName} so you can trace them back.',
 						placeholder: 'crm-sync',
-					},
-					{
-						displayName: 'Treat Content as Markdown',
-						name: 'markdown',
-						type: 'boolean',
-						default: false,
-						description:
-							'Whether string content should be stored as markdown. Preserves headings, lists, and code blocks. No effect when content is an object.',
 					},
 					{
 						displayName: 'Metadata (JSON)',
@@ -153,22 +145,17 @@ export class Wire implements INodeType {
 				const options = this.getNodeParameter('options', i, {}) as {
 					tags?: string;
 					source?: string;
-					markdown?: boolean;
 					metadata?: string | Record<string, unknown>;
 				};
 
+				// Pass the value through as-is and let wire_write classify it on
+				// the server. String becomes text or markdown depending on shape;
+				// object becomes structured. Numbers and booleans are coerced.
 				let content: string | Record<string, unknown>;
-				let contentType: 'text' | 'markdown' | 'structured';
-
-				if (typeof rawContent === 'string') {
-					content = rawContent;
-					contentType = options.markdown ? 'markdown' : 'text';
-				} else if (rawContent && typeof rawContent === 'object') {
-					content = rawContent as Record<string, unknown>;
-					contentType = 'structured';
+				if (typeof rawContent === 'string' || (rawContent && typeof rawContent === 'object')) {
+					content = rawContent as string | Record<string, unknown>;
 				} else {
 					content = String(rawContent);
-					contentType = 'text';
 				}
 
 				const tagList = options.tags
@@ -188,7 +175,6 @@ export class Wire implements INodeType {
 
 				const body: Record<string, unknown> = {
 					content,
-					contentType,
 					source: options.source?.trim() || defaultSource,
 				};
 				if (tagList && tagList.length > 0) body.tags = tagList;
@@ -219,7 +205,6 @@ export class Wire implements INodeType {
 						entryId: response.data?.entryId,
 						message: response.data?.message,
 						source: body.source as string,
-						contentType,
 					},
 					pairedItem: { item: i },
 				});

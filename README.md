@@ -28,8 +28,7 @@ Most people start this way. Spin up a container, drop some context in, see it wo
 
 One node. One action: **Write to Wire**. Each input item becomes an entry in the container you point at.
 
-- Strings are stored as text (or markdown if you flip the option)
-- Objects are stored as structured data
+- Wire figures out the content type automatically (text, markdown, or structured JSON)
 - Each entry is tagged with the workflow and node name so you can trace it back
 - Tags, a custom label, and extra metadata are optional
 
@@ -58,7 +57,6 @@ Under **Add option**:
 
 - **Tags** for filtering later
 - **Source Override** if you want a custom label
-- **Treat Content as Markdown** to preserve formatting
 - **Metadata** for run IDs, upstream record IDs, and anything else you want audited
 
 ## Errors
