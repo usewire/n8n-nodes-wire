@@ -57,6 +57,7 @@ A call to `POST /container/:id/tools/write` with a body like:
 
 The node maps Wire error codes to human messages:
 
+- **Insufficient credits**: writes are free, but a container is locked when the organization's credit balance is below its floor. Top up at [usewire.io](https://usewire.io).
 - **Forbidden**: the API key does not have access to the target container
 - **Not found**: the Wire Address in the credential is wrong
 - **Unauthorized**: the API key is revoked, expired, or for a different container

@@ -28,6 +28,8 @@ interface WireEntryResponse {
  */
 function explainWireError(code: string | undefined, fallback: string): string {
 	switch (code) {
+		case 'INSUFFICIENT_CREDITS':
+			return 'The Wire organization is below its credit floor. Writes are free, but the container is locked until the balance is topped up. Go to https://usewire.io to add credits.';
 		case 'FORBIDDEN':
 			return 'This API key does not have access to the target container, or the key is missing the write scope.';
 		case 'NOT_FOUND':
