@@ -2,7 +2,7 @@
 
 An [n8n](https://n8n.io) community node for [Wire](https://usewire.io). Push entries into a Wire container from any workflow.
 
-Ingestion only. This node is for getting data into Wire. Agents consume Wire via MCP, not n8n.
+This node writes to Wire. Agents read Wire via MCP.
 
 ## What it does
 
