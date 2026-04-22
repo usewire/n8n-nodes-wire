@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-wire",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "n8n community node for Wire. Push entries into a Wire container from any workflow.",
   "keywords": [
     "n8n-community-node-package",
@@ -43,7 +43,7 @@
   ],
   "n8n": {
     "n8nNodesApiVersion": 1,
-    "strict": true,
+    "strict": false,
     "credentials": [
       "dist/credentials/WireApi.credentials.js"
     ],
