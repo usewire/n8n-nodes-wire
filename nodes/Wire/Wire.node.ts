@@ -13,6 +13,10 @@ interface WireEntryResponse {
 	data?: {
 		entryId?: string;
 		message?: string;
+		/** Canonical object name the entry was filed under, when one was given. */
+		object?: string;
+		/** Keys a connector-owned schema for that object doesn't define. */
+		unknownFields?: string[];
 	};
 	error?: {
 		code?: string;
@@ -83,12 +87,29 @@ export class Wire implements INodeType {
 				description: 'What to store. A string or an expression resolving to an object.',
 			},
 			{
+				displayName: 'Object',
+				name: 'object',
+				type: 'string',
+				default: '',
+				placeholder: 'expenses',
+				description:
+					'Optional. Group same-shaped records under an object name so they can be queried together. When Content is a JSON object, its keys become the queryable fields automatically. Reuse the same name for every record of this kind. Leave blank to store a plain entry.',
+			},
+			{
 				displayName: 'Options',
 				name: 'options',
 				type: 'collection',
 				placeholder: 'Add option',
 				default: {},
 				options: [
+					{
+						displayName: 'Fields (JSON)',
+						name: 'fields',
+						type: 'json',
+						default: '',
+						description:
+							'Queryable values for this record, used with Object. Leave blank when Content is already a JSON object — its keys are used. Set this when the readable content and the queryable values differ.',
+					},
 					{
 						displayName: 'Tags',
 						name: 'tags',
@@ -143,10 +164,12 @@ export class Wire implements INodeType {
 		for (let i = 0; i < items.length; i++) {
 			try {
 				const rawContent = this.getNodeParameter('content', i);
+				const objectName = String(this.getNodeParameter('object', i, '') ?? '').trim();
 				const options = this.getNodeParameter('options', i, {}) as {
 					tags?: string;
 					source?: string;
 					metadata?: string | Record<string, unknown>;
+					fields?: string | Record<string, unknown>;
 				};
 
 				// Pass the value through as-is and let wire_write classify it on
@@ -174,12 +197,25 @@ export class Wire implements INodeType {
 							: (options.metadata as Record<string, unknown>);
 				}
 
+				// Explicit field map. Only meaningful alongside an object name — Wire
+				// falls back to the content object's own keys when this is omitted,
+				// which covers the common "map the whole item" workflow.
+				let fields: Record<string, unknown> | undefined;
+				if (objectName && options.fields !== undefined && options.fields !== '') {
+					fields =
+						typeof options.fields === 'string'
+							? (JSON.parse(options.fields) as Record<string, unknown>)
+							: (options.fields as Record<string, unknown>);
+				}
+
 				const body: Record<string, unknown> = {
 					content,
 					source: options.source?.trim() || defaultSource,
 				};
 				if (tagList && tagList.length > 0) body.tags = tagList;
 				if (metadata) body.metadata = metadata;
+				if (objectName) body.object = objectName;
+				if (fields) body.fields = fields;
 
 				const response = (await this.helpers.httpRequestWithAuthentication.call(
 					this,
@@ -206,6 +242,12 @@ export class Wire implements INodeType {
 						entryId: response.data?.entryId,
 						message: response.data?.message,
 						source: body.source as string,
+						// Wire reports the object's canonical spelling, which can differ
+						// in case from what was requested (the first spelling wins).
+						...(response.data?.object ? { object: response.data.object } : {}),
+						...(response.data?.unknownFields?.length
+							? { unknownFields: response.data.unknownFields }
+							: {}),
 					},
 					pairedItem: { item: i },
 				});
